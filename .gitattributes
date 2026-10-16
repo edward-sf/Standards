@@ -1,0 +1,19 @@
+# LF in the repo and the working tree on every OS, so shell scripts and hooks run under
+# Git Bash on Windows. Overrides core.autocrlf.
+* text=auto eol=lf
+
+# Windows-only scripts need CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary: never diff or convert.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.woff binary
+*.woff2 binary

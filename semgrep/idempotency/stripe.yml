@@ -1,0 +1,52 @@
+# Stripe calls that move money must carry an idempotency key.
+# Tests: stripe.py next to this file. To add a provider, see "Adding a payment provider" in the README.
+
+rules:
+  - id: stripe-idempotency-key-required
+    languages: [python]
+    severity: ERROR
+    message: >-
+      This call moves money without an idempotency key. A retry after a timeout can then
+      charge or pay twice. Pass idempotency_key=... (stripe.X.create) or
+      options={"idempotency_key": ...} (StripeClient), derived from the business operation,
+      not generated per attempt.
+    metadata:
+      category: correctness
+      standard: money
+      references:
+        - https://docs.stripe.com/api/idempotent_requests
+    pattern-either:
+      # Module-level API: stripe.PaymentIntent.create(...)
+      - patterns:
+          - pattern: stripe.$RESOURCE.$OP(...)
+          - metavariable-regex:
+              metavariable: $RESOURCE
+              regex: ^(PaymentIntent|Charge|Refund|Payout|Transfer|Invoice|Subscription|SetupIntent|CreditNote|Topup)$
+          - metavariable-regex:
+              metavariable: $OP
+              regex: ^(create|capture|confirm|pay)(_async)?$
+          - pattern-not: stripe.$RESOURCE.$OP(..., idempotency_key=$KEY, ...)
+      # StripeClient: client.payment_intents.create(...) or client.v1.payment_intents.create(...)
+      - patterns:
+          - pattern-either:
+              # No options at all.
+              - patterns:
+                  - pattern-either:
+                      - pattern: $CLIENT.$RESOURCE.$OP(...)
+                      - pattern: $CLIENT.v1.$RESOURCE.$OP(...)
+                  - pattern-not: $CLIENT.$RESOURCE.$OP(..., options=$OPTS, ...)
+                  - pattern-not: $CLIENT.v1.$RESOURCE.$OP(..., options=$OPTS, ...)
+              # An inline options dict without the key. Options built elsewhere (options=opts)
+              # can't be checked statically, so they aren't flagged.
+              - patterns:
+                  - pattern-either:
+                      - pattern: "$CLIENT.$RESOURCE.$OP(..., options={...}, ...)"
+                      - pattern: "$CLIENT.v1.$RESOURCE.$OP(..., options={...}, ...)"
+                  - pattern-not: '$CLIENT.$RESOURCE.$OP(..., options={..., "idempotency_key": $KEY, ...}, ...)'
+                  - pattern-not: '$CLIENT.v1.$RESOURCE.$OP(..., options={..., "idempotency_key": $KEY, ...}, ...)'
+          - metavariable-regex:
+              metavariable: $RESOURCE
+              regex: ^(payment_intents|charges|refunds|payouts|transfers|invoices|subscriptions|setup_intents|credit_notes|topups)$
+          - metavariable-regex:
+              metavariable: $OP
+              regex: ^(create|capture|confirm|pay)(_async)?$

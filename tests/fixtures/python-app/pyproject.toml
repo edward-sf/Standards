@@ -1,0 +1,23 @@
+# Minimal project that self-test.yml runs ci-python.yml against. It shows the shape a
+# project needs: a uv.lock, and ruff, mypy and pytest in the dev group.
+[project]
+name = "python-app"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["mypy==2.4.0", "pytest==9.1.1", "ruff==0.17.1"]
+
+[build-system]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "app"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+strict = true

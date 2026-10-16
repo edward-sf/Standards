@@ -1,0 +1,120 @@
+# Shared PR policy for every project, whatever its stack: Conventional Commits and the PR checklist.
+#
+# It is separate from ci-<stack>.yml because it must rerun when the PR description is edited,
+# and that shouldn't rerun the whole test suite. Call it from its own workflow file:
+#
+#   name: PR policy
+#   on:
+#     pull_request:
+#       types: [opened, edited, synchronize, reopened]
+#   jobs:
+#     policy:
+#       uses: edward-sf/standards/.github/workflows/pr-policy.yml@v1.0.0
+#
+# Make `policy / required` a required check in the project's ruleset.
+name: PR policy
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # An empty ref would make checkout fall back to main and silently run unreleased rules.
+      - name: Resolve standards ref
+        env:
+          STANDARDS_REPO: ${{ job.workflow_repository }}
+          STANDARDS_SHA: ${{ job.workflow_sha }}
+        run: |
+          [ -n "${STANDARDS_REPO}" ] && [ -n "${STANDARDS_SHA}" ] || { echo "::error::job.workflow_sha is empty; can't load standards at the pinned version."; exit 1; }
+          echo "Standards: ${STANDARDS_REPO}@${STANDARDS_SHA}"
+      # Rules and config come from this repo at the exact commit the project pinned.
+      - name: Check out standards
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .standards
+          sparse-checkout: commitlint
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: npm ci --prefix .standards/commitlint --ignore-scripts --no-audit --no-fund
+      - name: Commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: >-
+          .standards/commitlint/node_modules/.bin/commitlint
+          --config .standards/commitlint/commitlint.config.mjs
+          --from "${BASE_SHA}" --to "${HEAD_SHA}" --verbose
+      # Squash merges use the PR title as the commit message, so it must pass too.
+      - name: PR title
+        if: ${{ !cancelled() }}
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: >-
+          printf '%s\n' "${PR_TITLE}" |
+          .standards/commitlint/node_modules/.bin/commitlint
+          --config .standards/commitlint/commitlint.config.mjs --verbose
+
+  checklist:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # An empty ref would make checkout fall back to main and silently run unreleased rules.
+      - name: Resolve standards ref
+        env:
+          STANDARDS_REPO: ${{ job.workflow_repository }}
+          STANDARDS_SHA: ${{ job.workflow_sha }}
+        run: |
+          [ -n "${STANDARDS_REPO}" ] && [ -n "${STANDARDS_SHA}" ] || { echo "::error::job.workflow_sha is empty; can't load standards at the pinned version."; exit 1; }
+          echo "Standards: ${STANDARDS_REPO}@${STANDARDS_SHA}"
+      # Rules and config come from this repo at the exact commit the project pinned.
+      - name: Check out standards
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .standards
+          sparse-checkout: |
+            pr
+            .github/pull_request_template.md
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: PR checklist
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: python3 .standards/pr/check_checklist.py .standards/.github/pull_request_template.md
+
+  # The single check to require. Jobs skipped by their `if` (non-PR events, Dependabot's
+  # checklist) count as passing; failures and cancellations don't.
+  required:
+    if: ${{ always() }}
+    needs: [commits, checklist]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All checks passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            case "${result}" in
+              success|skipped) ;;
+              *) echo "::error::A required job did not succeed."; exit 1 ;;
+            esac
+          done

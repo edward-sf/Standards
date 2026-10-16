@@ -1,0 +1,36 @@
+# A project's own money-moving functions must be called with an idempotency key.
+# Tests: payment-functions.py next to this file.
+#
+# This works with the provider rules. The project wraps its provider once (where e.g.
+# stripe.yml checks the SDK call), and this rule makes every caller of that wrapper pass the
+# key in, so it comes from the business operation instead of being minted per attempt inside it.
+
+rules:
+  - id: payment-call-idempotency-key-required
+    languages: [python]
+    severity: ERROR
+    message: >-
+      $FUNC(...) looks like it moves money but isn't passed idempotency_key=. Derive the key from
+      the business operation (e.g. the order ID) and pass it through, so a retry can't charge or
+      pay twice. If $FUNC doesn't move money, rename it or add `# nosemgrep:
+      payment-call-idempotency-key-required` with a reason.
+    metadata:
+      category: correctness
+      standard: money
+    patterns:
+      - pattern-either:
+          - pattern: $FUNC(...)
+          - pattern: $OBJ.$FUNC(...)
+      - pattern-not: $FUNC(..., idempotency_key=$KEY, ...)
+      - pattern-not: $OBJ.$FUNC(..., idempotency_key=$KEY, ...)
+      # Keyword arguments built elsewhere can't be checked statically; don't flag them.
+      - pattern-not: $FUNC(..., **$KWARGS, ...)
+      - pattern-not: $OBJ.$FUNC(..., **$KWARGS, ...)
+      # Provider SDK calls have their own rules (e.g. stripe.yml).
+      - pattern-not: stripe.$RESOURCE.$OP(...)
+      # Names that move money: charge, refund, payout, create_payment, capture_payment,
+      # charge_card, refund_order, pay_invoice, initiate_transfer... Lookups such as
+      # refund_status or payment_id are excluded.
+      - metavariable-regex:
+          metavariable: $FUNC
+          regex: ^(?!.*_(status|id|ids|amount|total|fee|fees|history|count|details|list|url|reason|method|type)$)((create|capture|issue|initiate|make|send|submit|execute)_(payment|charge|refund|payout|transfer|disbursement)s?|(charge|refund|payout)|(charge|refund|payout|pay)_[a-z0-9_]+)$

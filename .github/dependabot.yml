@@ -1,0 +1,34 @@
+# Keeps the tools the shared workflows run current. Each update is a reviewed PR here, and
+# reaches projects only when it's released. SEMGREP_VERSION in the workflows isn't tracked;
+# bump it by hand (see README).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /commitlint
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    groups:
+      commitlint:
+        patterns: ["@commitlint/*"]
+
+  - package-ecosystem: uv
+    directory: /tests/fixtures/python-app
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: test
+    groups:
+      fixture:
+        patterns: ["*"]
