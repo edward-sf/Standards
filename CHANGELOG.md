@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/edward-sf/Standards/compare/v1.0.0...v1.0.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* check Dependabot PRs by title only in pr-policy ([#6](https://github.com/edward-sf/Standards/issues/6)) ([8e062f7](https://github.com/edward-sf/Standards/commit/8e062f7fa2bcf168dc3d7ce7b73f555bd7b038b6))
+
 ## 1.0.0 (2026-10-17)
 
 
