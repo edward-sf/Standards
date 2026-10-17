@@ -2,6 +2,10 @@
 
 <!-- One or two sentences. Link the issue if there is one. -->
 
+## Architecture
+
+<!-- Changing the architecture (adding, removing or reconnecting components, services, workflows or data flows)? Add a Mermaid diagram of the design after this change, and a sentence or two on what's different and why. Otherwise write "No architectural change." -->
+
 ## Why
 
 ## How it was verified

@@ -1,6 +1,6 @@
 # Money-handling rules, enforced by the semgrep job in ci-python.yml. Idempotency rules are in idempotency/.
 # Tests: semgrep/money-rules.py (`# ruleid:` lines must match, `# ok:` lines must not).
-# Run them with: uvx --from semgrep==1.181.0 semgrep --test semgrep/
+# Run them with: bash semgrep/semgrep.sh --test semgrep/
 #
 # Silence a true false positive with `# nosemgrep: <rule-id>` and a reason on the same line.
 # Reviewers should treat every nosemgrep as an exception to justify, not a fix.

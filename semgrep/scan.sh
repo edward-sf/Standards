@@ -4,13 +4,11 @@
 #
 # Env:
 #   STANDARDS_DIR    checkout of this repo (required)
-#   SEMGREP_VERSION  semgrep version to run (default below)
 #   PROJECT_RULES    project rule files or folders, relative to the project, one per line
 #   EXCLUDES         extra paths to skip, gitignore syntax, one per line
 set -euo pipefail
 
 : "${STANDARDS_DIR:?set STANDARDS_DIR to a checkout of the standards repo}"
-SEMGREP_VERSION="${SEMGREP_VERSION:-1.181.0}"
 
 # A project's own .semgrepignore could exclude anything, so replace it with the standard one.
 while IFS= read -r ignore_file; do
@@ -37,5 +35,5 @@ echo "Effective .semgrepignore:"
 sed 's/^/  /' .semgrepignore
 
 # --project-root . anchors the ignore file here and scans every file, not just git-tracked ones.
-uvx --from "semgrep==${SEMGREP_VERSION}" semgrep scan "${args[@]}" \
+bash "${STANDARDS_DIR}/semgrep/semgrep.sh" scan "${args[@]}" \
   --project-root . --error --metrics=off --disable-version-check

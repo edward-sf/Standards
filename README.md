@@ -8,6 +8,43 @@ Per-project starting files (agent instructions, hooks, the CI caller) live in
 [Scaffold](https://github.com/edward-sf/Scaffold), whose `/scaffold-init` wires a new project to
 this repo. Why it's split this way: [ADR 0001](docs/adr/0001-enforce-standards-through-pinned-reusable-workflows.md).
 
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph project["Each project"]
+    callers["ci.yml and pr-policy.yml<br/>(callers, pinned to vX.Y.Z)"]
+    ruleset["main ruleset<br/>requires ci / required<br/>and policy / required"]
+  end
+
+  subgraph standards["This repo, at tag vX.Y.Z"]
+    ci_python["ci-python.yml<br/>ruff, mypy, pytest, Semgrep"]
+    pr_policy["pr-policy.yml<br/>commitlint, PR checklist"]
+    config["semgrep/, commitlint/, pr/<br/>rules, config, scripts"]
+  end
+
+  subgraph release["Shipping a change"]
+    main["PR merged to main<br/>(self-test, policy)"]
+    release_pr["release PR<br/>CHANGELOG.md, version"]
+    tag["tag vX.Y.Z<br/>and GitHub release"]
+  end
+
+  scaffold["Scaffold<br/>/scaffold-init"] -- "adds callers<br/>and PR template" --> callers
+  callers -- "uses @vX.Y.Z" --> ci_python & pr_policy
+  ci_python & pr_policy -- "check out at<br/>job.workflow_sha" --> config
+  ci_python & pr_policy -- "report checks" --> ruleset
+  main -- "release.yml" --> release_pr
+  release_pr -- "merge" --> tag
+  tag -- "Dependabot upgrade PR" --> callers
+```
+
+A project's two caller workflows run the reusable workflows here at an exact tag. Those
+workflows load the rules, config and scripts from this repo at the same commit, so a project
+can't run rules newer or older than the tag it pinned. Each workflow ends in one `required` job,
+which is the check the project's ruleset requires. Changes ship as a new tag through the release
+PR, and Dependabot offers each tag to every project as an upgrade PR, which runs the new standard
+against that project before it merges.
+
 ## What's here
 
 | Path | What it enforces |
@@ -17,6 +54,7 @@ this repo. Why it's split this way: [ADR 0001](docs/adr/0001-enforce-standards-t
 | [`semgrep/money-rules.yml`](semgrep/money-rules.yml) | No floats for money, no `Decimal` from floats, no card data in logs. |
 | [`semgrep/idempotency/`](semgrep/idempotency/) | Idempotency keys on money-moving calls: one file per payment provider, plus a rule for the project's own payment functions. |
 | [`semgrep/semgrepignore`](semgrep/semgrepignore), [`semgrep/scan.sh`](semgrep/scan.sh) | What Semgrep skips, and how CI runs it. Projects can't override the ignore list with their own `.semgrepignore`. |
+| [`semgrep/requirements.txt`](semgrep/requirements.txt), [`semgrep/semgrep.sh`](semgrep/semgrep.sh) | The one pinned Semgrep version, and the wrapper every workflow and local command runs it through. |
 | [`commitlint/`](commitlint/) | Conventional Commits config and its pinned, locked commitlint. |
 | [`.github/pull_request_template.md`](.github/pull_request_template.md) | The PR template. Its checklist is what `pr-policy` checks; Scaffold copies it into projects. |
 | [`docs/adr/`](docs/adr/) | Decisions behind the standards. |
@@ -108,10 +146,12 @@ If a flagged function really doesn't move money, rename it or add
 3. Release as a minor version. The workflow loads the whole `semgrep/` folder, so nothing
    else changes.
 
-To test project rules (`semgrep --test` skips hidden folders like `.semgrep/`, so pass paths):
+To test project rules (`semgrep --test` skips hidden folders like `.semgrep/`, so pass paths), use
+the Semgrep version in [`semgrep/requirements.txt`](semgrep/requirements.txt), which is what CI
+runs them with:
 
 ```sh
-cd .semgrep && uvx --from semgrep==1.181.0 semgrep --test --config ledger.yml ledger.py
+cd .semgrep && uvx --from semgrep==<version> semgrep --test --config ledger.yml ledger.py
 ```
 
 ## Changing a standard
@@ -179,13 +219,15 @@ change the release notes describe.
 
 ### Tool versions
 
-Dependabot keeps the actions, commitlint and the fixture's Python tools current. It doesn't
-track `SEMGREP_VERSION` in `ci-python.yml` and `self-test.yml`; bump both by hand.
+Dependabot keeps every tool version current: the actions, commitlint, the fixture's Python tools
+and Semgrep. Semgrep's version lives only in [`semgrep/requirements.txt`](semgrep/requirements.txt);
+CI and the local commands below all run it through [`semgrep/semgrep.sh`](semgrep/semgrep.sh), so
+a Dependabot bump there reruns the rule tests at the new version before anyone merges it.
 
 ## Testing locally
 
 ```sh
-uvx --from semgrep==1.181.0 semgrep --test --metrics=off semgrep/   # Semgrep rule tests
+bash semgrep/semgrep.sh --test --metrics=off semgrep/                 # Semgrep rule tests
 python3 -m unittest discover -s pr                                    # checklist script tests
 actionlint                                                            # workflow lint (uses .github/actionlint.yaml)
 ```
@@ -195,7 +237,7 @@ does: add `--json > results.json`, then run `python3 semgrep/check_tests.py resu
 
 On Windows, set `PYTHONUTF8=1` first. If rule files fail to load with a `PermissionError` on
 Semgrep's settings file (parallel test workers collide on it), test one file at a time:
-`semgrep --test --config semgrep/money-rules.yml semgrep/money-rules.py`.
+`bash semgrep/semgrep.sh --test --config semgrep/money-rules.yml semgrep/money-rules.py`.
 
 ## Security
 

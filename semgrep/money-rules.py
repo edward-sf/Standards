@@ -1,4 +1,4 @@
-# Test cases for money-rules.yml. Run: uvx --from semgrep==1.181.0 semgrep --test semgrep/
+# Test cases for money-rules.yml. Run: bash semgrep/semgrep.sh --test semgrep/
 # This file is a fixture and is never imported.
 import decimal
 import logging

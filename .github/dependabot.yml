@@ -1,6 +1,5 @@
 # Keeps the tools the shared workflows run current. Each update is a reviewed PR here, and
-# reaches projects only when it's released. SEMGREP_VERSION in the workflows isn't tracked;
-# bump it by hand (see README).
+# reaches projects only when it's released.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -22,6 +21,14 @@ updates:
     groups:
       commitlint:
         patterns: ["@commitlint/*"]
+
+  # semgrep/requirements.txt: the one Semgrep version CI runs, via semgrep/semgrep.sh.
+  - package-ecosystem: pip
+    directory: /semgrep
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
 
   - package-ecosystem: uv
     directory: /tests/fixtures/python-app

@@ -14,9 +14,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  SEMGREP_VERSION: "1.181.0"
-
 jobs:
   actionlint:
     runs-on: ubuntu-latest
@@ -42,7 +39,7 @@ jobs:
       # JSON and fails on load errors, failed tests, and rule files with no results.
       - name: Shared rules
         run: |
-          uvx --from "semgrep==${SEMGREP_VERSION}" semgrep --test --json --metrics=off --disable-version-check \
+          bash semgrep/semgrep.sh --test --json --metrics=off --disable-version-check \
             semgrep/ > "${RUNNER_TEMP}/shared.json" || true
           python3 semgrep/check_tests.py "${RUNNER_TEMP}/shared.json" semgrep
       # --test skips hidden folders, so project rules in .semgrep/ need explicit paths.
@@ -51,7 +48,7 @@ jobs:
         env:
           RULES: tests/fixtures/python-app/.semgrep
         run: |
-          uvx --from "semgrep==${SEMGREP_VERSION}" semgrep --test --json --metrics=off --disable-version-check \
+          bash semgrep/semgrep.sh --test --json --metrics=off --disable-version-check \
             --config "${RULES}/ledger.yml" "${RULES}/ledger.py" > "${RUNNER_TEMP}/project.json" || true
           python3 semgrep/check_tests.py "${RUNNER_TEMP}/project.json" "${RULES}"
 
