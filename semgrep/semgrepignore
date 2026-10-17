@@ -1,0 +1,21 @@
+# The only .semgrepignore the shared rules respect. ci-python.yml deletes any .semgrepignore in
+# the project and installs this one at the project root, so a project can't quietly exclude code
+# from the standards. Project exclusions go through the `semgrep-exclude` input instead, where
+# they show up in the project's ci.yml diff. Paths starting with / are relative to the project.
+
+# Not project code.
+/.standards/
+.git/
+.venv/
+venv/
+node_modules/
+__pycache__/
+build/
+dist/
+
+# Tests use fake card numbers and call payment functions without keys on purpose.
+/tests/
+/test/
+test_*.py
+*_test.py
+conftest.py

@@ -1,0 +1,13 @@
+# Applies pr-policy.yml to this repo's own PRs, the same way projects call it.
+name: PR policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    uses: ./.github/workflows/pr-policy.yml

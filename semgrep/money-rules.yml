@@ -1,0 +1,80 @@
+# Money-handling rules, enforced by the semgrep job in ci-python.yml. Idempotency rules are in idempotency/.
+# Tests: semgrep/money-rules.py (`# ruleid:` lines must match, `# ok:` lines must not).
+# Run them with: bash semgrep/semgrep.sh --test semgrep/
+#
+# Silence a true false positive with `# nosemgrep: <rule-id>` and a reason on the same line.
+# Reviewers should treat every nosemgrep as an exception to justify, not a fix.
+
+rules:
+  - id: no-float-for-money
+    languages: [python]
+    severity: ERROR
+    message: >-
+      `$NAME` looks like a money value but is a float. Floats can't represent most decimal
+      amounts exactly, so totals drift. Use decimal.Decimal, or integer minor units (cents).
+    metadata:
+      category: correctness
+      standard: money
+    patterns:
+      - pattern-either:
+          - pattern: "$NAME: float"
+          - pattern: "$NAME: float = $VALUE"
+          - pattern: "$NAME: float | None"
+          - pattern: "$NAME: float | None = $VALUE"
+          - pattern: "$NAME: Optional[float]"
+          - pattern: "$NAME: Optional[float] = $VALUE"
+          - pattern: "$NAME = float(...)"
+          - pattern: "$OBJ.$NAME = float(...)"
+          - pattern: "def $FUNC(..., $NAME: float, ...): ..."
+          - pattern: "def $FUNC(..., $NAME: float = $DEFAULT, ...): ..."
+          - pattern: "def $NAME(...) -> float: ..."
+      # Money-like names; excludes rates, ratios and percentages, which are legitimately floats.
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i)^(?!.*(rate|ratio|percent|pct|fraction|weight|score)).*(amount|price|cost|total|balance|fee|money|cents|payment|refund|charge|tax|payout|salary|wage)
+
+  - id: no-decimal-from-float
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Decimal($VALUE) is built from a float literal, so it inherits the float's rounding error
+      (Decimal(0.1) is 0.1000000000000000055...). Pass a string: Decimal("$VALUE").
+    metadata:
+      category: correctness
+      standard: money
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: decimal.Decimal($VALUE)
+              - pattern: Decimal($VALUE)
+          - metavariable-regex:
+              metavariable: $VALUE
+              regex: ^-?\d*\.\d*([eE][-+]?\d+)?$
+      - pattern: decimal.Decimal(float(...))
+      - pattern: Decimal(float(...))
+
+  - id: no-logging-card-numbers
+    languages: [python]
+    severity: ERROR
+    message: >-
+      This log call includes what looks like card data. PCI DSS forbids logging full card
+      numbers (PAN), CVVs or expiry dates. Log a token or the last four digits instead.
+    metadata:
+      category: security
+      standard: money
+      references:
+        - https://www.pcisecuritystandards.org/
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-either:
+                  - pattern: $LOG.$METHOD(..., $ARG, ...)
+                  - pattern: $LOG.$METHOD(..., $KW=$ARG, ...)
+              - metavariable-regex:
+                  metavariable: $METHOD
+                  regex: ^(debug|info|warning|warn|error|exception|critical|fatal|log|msg)$
+          - pattern: print(..., $ARG, ...)
+      # Card fields by name; masked, tokenized and last-four values are allowed.
+      - metavariable-regex:
+          metavariable: $ARG
+          regex: (?i)^(?!.*(last_?4|last_?four|masked|mask_|redact|token|fingerprint|brand)).*\b(\w*_)?(card_?num(ber)?|card_?no|cc_?num(ber)?|credit_?card(_?num(ber)?)?|pan|cvv2?|cvc2?|card_?expiry|exp_?(month|year))\b

@@ -1,0 +1,13 @@
+# Example project-local rule, passed to ci-python.yml with `semgrep-config: .semgrep`.
+# Tests: ledger.py next to this file. ci-python.yml skips this folder when scanning.
+rules:
+  - id: ledger-post-idempotency-key-required
+    languages: [python]
+    severity: ERROR
+    message: ledger.post(...) must be passed idempotency_key=, so a retried posting isn't counted twice.
+    patterns:
+      - pattern: $LEDGER.post(...)
+      - pattern-not: $LEDGER.post(..., idempotency_key=$KEY, ...)
+      - metavariable-regex:
+          metavariable: $LEDGER
+          regex: (?i).*ledger$

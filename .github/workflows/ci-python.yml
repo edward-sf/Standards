@@ -1,0 +1,151 @@
+# Shared CI for Python projects managed with uv: lint, types, tests, and the Semgrep standards.
+#
+# Call it from a project, pinned to an exact release tag:
+#
+#   jobs:
+#     ci:
+#       uses: edward-sf/standards/.github/workflows/ci-python.yml@v1.0.0
+#
+# Make `ci / required` a required check in the project's ruleset.
+#
+# The project must have pyproject.toml and a current uv.lock, with ruff, mypy and pytest in its
+# dev dependencies. Their configuration (rules, strictness, test paths) lives in pyproject.toml.
+# Semgrep ignores the project's .semgrepignore; see semgrep/semgrepignore for what it skips.
+name: CI (Python)
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Directory with pyproject.toml and uv.lock, relative to the repo root.
+        type: string
+        default: "."
+      python-version:
+        description: Python version to use. Empty uses the project's .python-version or requires-python.
+        type: string
+        default: ""
+      semgrep-config:
+        description: >-
+          Project Semgrep rule files or folders, one per line, relative to working-directory
+          (e.g. `.semgrep`). They run alongside the shared rules, which can't be turned off.
+        type: string
+        default: ""
+      semgrep-exclude:
+        description: >-
+          Extra paths for Semgrep to skip, one per line, in gitignore syntax relative to
+          working-directory (e.g. `/src/generated/`). Use sparingly; each one is a reviewed exception.
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: ${{ inputs.python-version }}
+          working-directory: ${{ inputs.working-directory }}
+      - run: uv sync --locked
+      - name: ruff check
+        run: uv run --no-sync ruff check --output-format=github .
+      - name: ruff format
+        if: ${{ !cancelled() }}
+        run: uv run --no-sync ruff format --check --diff .
+
+  types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: ${{ inputs.python-version }}
+          working-directory: ${{ inputs.working-directory }}
+      - run: uv sync --locked
+      - name: mypy
+        run: uv run --no-sync mypy .
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: ${{ inputs.python-version }}
+          working-directory: ${{ inputs.working-directory }}
+      - run: uv sync --locked
+      # pytest exits non-zero when it collects no tests, so a project without tests fails here.
+      - name: pytest
+        run: uv run --no-sync pytest
+
+  semgrep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # An empty ref would make checkout fall back to main and silently run unreleased rules.
+      - name: Resolve standards ref
+        env:
+          STANDARDS_REPO: ${{ job.workflow_repository }}
+          STANDARDS_SHA: ${{ job.workflow_sha }}
+        run: |
+          [ -n "${STANDARDS_REPO}" ] && [ -n "${STANDARDS_SHA}" ] || { echo "::error::job.workflow_sha is empty; can't load standards at the pinned version."; exit 1; }
+          echo "Standards: ${STANDARDS_REPO}@${STANDARDS_SHA}"
+      # Rules and config come from this repo at the exact commit the project pinned.
+      - name: Check out standards
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .standards
+          sparse-checkout: semgrep
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      - name: semgrep
+        working-directory: ${{ inputs.working-directory }}
+        env:
+          STANDARDS_DIR: ${{ github.workspace }}/.standards
+          PROJECT_RULES: ${{ inputs.semgrep-config }}
+          EXCLUDES: ${{ inputs.semgrep-exclude }}
+        run: bash "${STANDARDS_DIR}/semgrep/scan.sh"
+
+  # The single check to require. It fails unless every job above succeeded.
+  required:
+    if: ${{ always() }}
+    needs: [lint, types, test, semgrep]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All checks passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            [ "${result}" = success ] || { echo "::error::A required job did not succeed."; exit 1; }
+          done

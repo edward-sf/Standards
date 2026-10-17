@@ -1,0 +1,83 @@
+# Tests this repo: workflow syntax, the Semgrep rules, the checklist script, and a real run of
+# ci-python.yml against tests/fixtures/python-app. Require `required` on main.
+name: Self-test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The image bundles shellcheck, so run: scripts are linted too.
+      - run: docker run --rm -v "${PWD}:/repo" --workdir /repo rhysd/actionlint:1.7.12 -color
+
+  semgrep-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: false
+      # `semgrep --test` exits 0 when a rule file fails to load, so check_tests.py reads its
+      # JSON and fails on load errors, failed tests, and rule files with no results.
+      - name: Shared rules
+        run: |
+          bash semgrep/semgrep.sh --test --json --metrics=off --disable-version-check \
+            semgrep/ > "${RUNNER_TEMP}/shared.json" || true
+          python3 semgrep/check_tests.py "${RUNNER_TEMP}/shared.json" semgrep
+      # --test skips hidden folders, so project rules in .semgrep/ need explicit paths.
+      - name: Example project rules
+        if: ${{ !cancelled() }}
+        env:
+          RULES: tests/fixtures/python-app/.semgrep
+        run: |
+          bash semgrep/semgrep.sh --test --json --metrics=off --disable-version-check \
+            --config "${RULES}/ledger.yml" "${RULES}/ledger.py" > "${RUNNER_TEMP}/project.json" || true
+          python3 semgrep/check_tests.py "${RUNNER_TEMP}/project.json" "${RULES}"
+
+  checklist-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s pr -v
+
+  ci-python:
+    uses: ./.github/workflows/ci-python.yml
+    with:
+      working-directory: tests/fixtures/python-app
+      semgrep-config: .semgrep
+
+  required:
+    if: ${{ always() }}
+    needs: [actionlint, semgrep-rules, checklist-script, ci-python]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: All checks passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: ${RESULTS}"
+          for result in ${RESULTS}; do
+            [ "${result}" = success ] || { echo "::error::A required job did not succeed."; exit 1; }
+          done

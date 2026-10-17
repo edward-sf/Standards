@@ -1,0 +1,3 @@
+# The Semgrep version every workflow, script and local command runs, through semgrep.sh.
+# Dependabot keeps it current; each bump reruns the rule tests in self-test.yml.
+semgrep==1.181.0
