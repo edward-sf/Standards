@@ -11,7 +11,7 @@ this repo. Why it's split this way: [ADR 0001](docs/adr/0001-enforce-standards-t
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TB
   subgraph project["Each project"]
     callers["ci.yml and pr-policy.yml<br/>(callers, pinned to vX.Y.Z)"]
     ruleset["main ruleset<br/>requires ci / required<br/>and policy / required"]
