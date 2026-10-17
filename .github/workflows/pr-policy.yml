@@ -51,7 +51,11 @@ jobs:
         with:
           node-version: 24
       - run: npm ci --prefix .standards/commitlint --ignore-scripts --no-audit --no-fund
+      # Dependabot writes its own commit messages, and sometimes capitalizes the subject
+      # ("test: Update …"), which fails subject-case. They can't be fixed without taking over its
+      # branch, so its PRs are checked by title only. A lowercase title fixes the squash commit.
       - name: Commit messages
+        if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
