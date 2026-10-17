@@ -20,6 +20,9 @@ concurrency:
 
 jobs:
   release-please:
+    # The App's private key is a secret of this environment, which only main can deploy to, so
+    # a workflow pushed on any other branch can't read it.
+    environment: release
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
