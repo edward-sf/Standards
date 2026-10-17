@@ -96,6 +96,10 @@ Then, in the project:
    Each is a gate job that fails unless every check in its workflow passed, so the names stay
    stable as checks are added.
 2. **Add Dependabot** for `github-actions`, so new releases here arrive as upgrade PRs.
+   `pr-policy` checks Dependabot PRs by title only: no checklist, and no check on its commits,
+   whose messages it writes itself. If a title fails because Dependabot capitalized it
+   (`ci: Bump …`), edit it to lowercase before merging. Dependabot copies the style of its
+   last merged commit, so later PRs follow.
 3. **Meet the Python workflow's assumptions.** You need `pyproject.toml` and a current `uv.lock`
    (`uv sync --locked` must pass), with `ruff`, `mypy` and `pytest` in the dev dependencies. Their
    rules live in `pyproject.toml`. pytest fails when there are no tests.
