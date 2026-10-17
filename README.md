@@ -189,8 +189,11 @@ decides the release:
 Pick the type from [Versioning](#versioning), not from what the change feels like: a stricter
 check that existing code may fail is `feat`, even when it closes a gap in a rule. Dependabot's
 tool bumps are `ci:` and `build:`, so they ship with the next release rather than starting one.
-To override the computed version, merge a commit to `main` whose message has a
-`Release-As: 2.0.0` footer. To fix a wrong changelog entry, edit the release PR before merging it.
+
+Squash merges use the PR description as the commit body, and release-please reads footers there.
+A line starting `Release-As: 2.0.0` in a PR description forces that version, and one starting
+`BREAKING CHANGE:` makes the release major, so keep both out of descriptions unless you mean them.
+To fix a wrong changelog entry, edit the release PR before merging it.
 
 The release PR is a normal PR: its required checks must pass. Its checklist is answered in
 `pull-request-footer` in [`.github/release-please-config.json`](.github/release-please-config.json),
@@ -202,9 +205,14 @@ a GitHub App instead, or its PRs could never pass their required checks:
 
 1. Create a GitHub App owned by your account, with no webhook and these repository permissions:
    Contents, Pull requests and Issues, all read and write. Install it on this repo only.
-2. In this repo's **Settings > Secrets and variables > Actions**, add the App's client ID as the
-   variable `RELEASE_APP_CLIENT_ID` and a private key as the secret `RELEASE_APP_PRIVATE_KEY`.
-3. If the `main` ruleset restricts tag creation, let the App create `v*` tags.
+2. Create an environment named `release` (**Settings > Environments**) whose deployment branches
+   are limited to `main`. Repo secrets reach `push` workflows on every branch; an environment
+   secret reaches only jobs on `main` that name the environment, as `release.yml` does.
+3. Add the App's client ID as the repo variable `RELEASE_APP_CLIENT_ID`, and a private key as the
+   `release` environment's secret `RELEASE_APP_PRIVATE_KEY`. Delete the downloaded key file.
+4. Add a tag ruleset for `refs/tags/v*` that restricts creation, updates and deletion, with the App
+   and repository admins as bypass actors. Releases then can't be moved or deleted, and only the
+   App (or an admin) can create one.
 
 ### Versioning
 
