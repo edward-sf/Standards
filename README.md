@@ -20,8 +20,10 @@ this repo. Why it's split this way: [ADR 0001](docs/adr/0001-enforce-standards-t
 | [`commitlint/`](commitlint/) | Conventional Commits config and its pinned, locked commitlint. |
 | [`.github/pull_request_template.md`](.github/pull_request_template.md) | The PR template. Its checklist is what `pr-policy` checks; Scaffold copies it into projects. |
 | [`docs/adr/`](docs/adr/) | Decisions behind the standards. |
+| [`CHANGELOG.md`](CHANGELOG.md) | What each release changed. Written by `release.yml`; see [Releasing](#releasing). |
 
-The rest (`self-test.yml`, `policy.yml`, `tests/fixtures/`) tests this repo itself.
+The rest (`self-test.yml`, `policy.yml`, `release.yml`, `tests/fixtures/`) tests and releases
+this repo itself.
 
 ## Using it in a project
 
@@ -120,10 +122,49 @@ cd .semgrep && uvx --from semgrep==1.181.0 semgrep --test --config ledger.yml le
 2. **Test it.** Add `# ruleid:` and `# ok:` cases next to any rule you change. `self-test.yml`
    runs the rule tests and the checklist tests, lints the workflows, and runs `ci-python.yml`
    against `tests/fixtures/python-app`.
-3. **Merge, then release** with an exact semver tag:
-   `gh release create v1.1.0 --generate-notes`. Never move or reuse a tag; projects pin them.
+3. **Merge, then merge the release PR.** See [Releasing](#releasing). Never move or reuse a tag;
+   projects pin them.
 4. **Dependabot opens the upgrade PR in each project.** It shows whether the project passes the
    new standard before anyone merges it.
+
+### Releasing
+
+[`release.yml`](.github/workflows/release.yml) runs
+[release-please](https://github.com/googleapis/release-please) on every push to `main`. It keeps
+one release PR open, `chore(main): release X.Y.Z`, that bumps the version and adds every change
+merged since the last release to [`CHANGELOG.md`](CHANGELOG.md). Merging it tags `vX.Y.Z` and
+publishes the GitHub release with the same notes. Nothing is released until you merge that PR,
+so let changes pile up and release when it suits.
+
+The version and the changelog come from the squash-merged PR titles, so the type you give a PR
+decides the release:
+
+| PR title | Release | Changelog section |
+| --- | --- | --- |
+| `feat!: …`, or a `BREAKING CHANGE:` footer | Major | Breaking changes |
+| `feat: …` | Minor | Features |
+| `fix: …`, `perf: …`, `revert: …` | Patch | Bug fixes, Performance improvements, Reverts |
+| `docs:`, `ci:`, `test:`, `build:`, `chore:`, … | None on its own | Not listed |
+
+Pick the type from [Versioning](#versioning), not from what the change feels like: a stricter
+check that existing code may fail is `feat`, even when it closes a gap in a rule. Dependabot's
+tool bumps are `ci:` and `build:`, so they ship with the next release rather than starting one.
+To override the computed version, merge a commit to `main` whose message has a
+`Release-As: 2.0.0` footer. To fix a wrong changelog entry, edit the release PR before merging it.
+
+The release PR is a normal PR: its required checks must pass. Its checklist is answered in
+`pull-request-footer` in [`.github/release-please-config.json`](.github/release-please-config.json),
+so when the PR template's checklist changes, change that footer to match or release PRs fail
+`pr-policy`.
+
+**One-time setup.** PRs opened with `GITHUB_TOKEN` don't trigger workflows, so release-please uses
+a GitHub App instead, or its PRs could never pass their required checks:
+
+1. Create a GitHub App owned by your account, with no webhook and these repository permissions:
+   Contents, Pull requests and Issues, all read and write. Install it on this repo only.
+2. In this repo's **Settings > Secrets and variables > Actions**, add the App's client ID as the
+   variable `RELEASE_APP_CLIENT_ID` and a private key as the secret `RELEASE_APP_PRIVATE_KEY`.
+3. If the `main` ruleset restricts tag creation, let the App create `v*` tags.
 
 ### Versioning
 
@@ -172,6 +213,6 @@ For SOC 2-style change management, the evidence is already in GitHub:
 
 - **What changed and why:** PRs and ADRs here.
 - **Who approved it:** PR reviews. `CODEOWNERS` plus the ruleset make review required.
-- **What shipped when:** releases and tags.
+- **What shipped when:** releases, tags and `CHANGELOG.md`.
 - **When each project adopted it:** the merged Dependabot PR in that project.
 - **That it was enforced:** required-check results on each project PR.

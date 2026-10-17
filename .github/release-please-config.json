@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "include-component-in-tag": false,
+  "initial-version": "1.0.0",
+  "pull-request-footer": "## Checklist\n\n- [ ] Full check passes with zero errors and warnings (release PR from release-please; the required checks on it gate the merge)\n- [ ] New behavior has tests; bug fixes start with a failing test (no new behavior: version and changelog only)\n- [x] Diff contains only changes this PR needs\n- [x] No secrets, `.env` files, or hand-edited generated files\n- [x] Ask-first changes (dependencies, migrations, CI, auth) are called out above (none)",
+  "packages": {
+    ".": {}
+  }
+}
