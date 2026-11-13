@@ -4,7 +4,7 @@
   "description": "Pinned commitlint for pr-policy.yml. Dependabot keeps package-lock.json current.",
   "type": "module",
   "devDependencies": {
-    "@commitlint/cli": "21.2.3",
-    "@commitlint/config-conventional": "21.2.3"
+    "@commitlint/cli": "21.2.4",
+    "@commitlint/config-conventional": "21.2.4"
   }
 }
