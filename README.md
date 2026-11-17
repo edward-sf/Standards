@@ -177,15 +177,15 @@ The following mechanisms help to maintain quality engineering standards, which h
 
 We also distinguish between three tiers of standards:
 
-### Mandatory `:red_circle: MUST`
+### Mandatory
 
 Non-negotiable requirements, such as protecting secrets, requiring code reviews, and preventing known critical vulnerabilities from reaching production.
 
-### Recommended `:large_blue_circle: SHOULD`
+### Recommended
 
 Strong recommendations that projects should follow unless they have a documented reason not to.
 
-### Optional `:white_circle: COULD`
+### Optional
 
 Suggestions and patterns that teams can adopt depending on their technology, architecture, and circumstances. Primarily used to avoid rework than enforce practices.
 
