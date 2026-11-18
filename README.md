@@ -1,6 +1,9 @@
-# Engineering standards
+# Standards
+A centralized source of truth for how software should be designed, built, tested, secured, documented, and maintained across client repositories.
 
-A centralized source of truth for how software should be designed, built, tested, secured, documented, and maintained across client repositories. Edward Simpson-Fitzgibbon (@edward-sf) maintains this repository for project maintainers, engineers, reviewers, and coding agents.
+I use these standards across my own engineering projects. The catalog below links to the practices I use today. The [adoption levels](#how-client-repos-consume-the-standards) explain why I want to move from documentation to automated enforcement, and the [pitfalls](#pitfalls-to-avoid) describe where I think standardization can go too far.
+
+Maintained by Edward Simpson-Fitzgibbon (@edward-sf).
 
 ## Available standards
 
@@ -24,6 +27,78 @@ Link the relevant standards from your contribution guide. Publish the merge poli
 
 Try the policy on a correction to an installation command. Record the problem, run the corrected command in a clean checkout, review the diff under the policy, and merge. A team that wants its owner to review a whole milestone can use the [two worked Git histories](development/git-workflow.md#two-histories-for-one-change) to follow the same correction through an issue PR and a milestone PR.
 
+## Repo structure
+
+Standards are organized around engineering disciplines, remaining language agnostic at the top level.
+
+The following structure is an aspirational example, not a current state representation of the standards as they exist today.
+
+```
+engineering-standards/
+├── principles/
+│   ├── engineering-principles.md
+│   ├── design-principles.md
+│   └── decision-making.md
+│
+├── architecture/
+│   ├── architecture-principles.md
+│   ├── service-design.md
+│   ├── api-design.md
+│   └── adr-standards.md
+│
+├── development/
+│   ├── coding-standards.md
+│   ├── git-workflow.md
+│   ├── code-review.md
+│   └── pull-request-standards.md
+│
+├── quality/
+│   ├── testing-strategy.md
+│   ├── test-coverage.md
+│   ├── code-quality.md
+│   └── definition-of-done.md
+│
+├── security/
+│   ├── secure-development.md
+│   ├── secrets-management.md
+│   ├── dependency-management.md
+│   └── vulnerability-management.md
+│
+├── operations/
+│   ├── ci-cd.md
+│   ├── observability.md
+│   ├── logging.md
+│   └── release-management.md
+│
+├── documentation/
+│   ├── documentation-standards.md
+│   ├── readme-template.md
+│   └── adr-template.md
+│
+├── templates/
+│   ├── pull-request-template.md
+│   ├── issue-template.md
+│   └── repository-template/
+│
+├── ai-engineering/
+│   ├── agent-architecture.md
+│   ├── agent-development.md
+│   ├── prompt-engineering.md
+│   ├── context-management.md
+│   ├── tool-integration.md
+│   ├── evaluation-standards.md
+│   ├── model-selection.md
+│   ├── safety-and-guardrails.md
+│   ├── observability-and-tracing.md
+│   ├── reliability-and-fallbacks.md
+│   └── human-in-the-loop.md
+│
+├── README.md
+├── CONTRIBUTING.md
+├── GOVERNANCE.md
+└── CHANGELOG.md
+```
+
 ## Conventions for the standards
 
 - Markdown is used for human-readable standards
@@ -39,14 +114,32 @@ There are several maturity levels possible.
 
 ### Level 1 - Documentation and reference
 
-Other repos reference the standards in their README or contributor guide, as in the adoption example above. The team applies and reviews the rules locally. Targeted links reduce the context that agents need to retrieve.
+Other repos reference the standards repository in their README or CONTRIBUTING documentation.
+
+For example:
+
+```Markdown
+## Engineering Standards
+
+This project follows Edward Simpson-Fitzgibbon's [Standards](https://github.com/edward-sf/standards).
+
+Relevant standards:
+- Development and coding conventions
+- Testing strategy
+- Pull request requirements
+- Security practices
+- Documentation requirements
+```
+
+This establishes a common reference, but enforcement is largely dependent on developers and agents to adhere to the standards. In agentic workflows, this is an inefficient way to manage context, increasing the required tool calls and lookups.
+
+A penny-wise, pound-foolish approach that can be cheaply implemented but increases the cost of development overall.
 
 ### Level 2 - Templates and shared configurations
 
-M3 will supply reusable assets that projects can adopt.
+The next level of maturity provides reusable assets that projects can adopt.
 
-Examples include
-
+Examples:
 - Pull request templates
 - Issue templates
 - CODEOWNERS templates
@@ -62,10 +155,27 @@ The standards repository defines the expectations; individual projects implement
 
 ### Level 3 - Automated enforcement
 
-M3 will provide reusable GitHub Actions workflows that client repositories can call. Each client will be able to add jobs specific to its stack.
+This is where the Standards become particularly meaningful.
 
-A central workflow can check the following.
+You can provide reusable GitHub Actions workflows that other repositories call, standardizing your core CI/CD actions across projects cheaply.
 
+**Planned for M3.** The YAML below illustrates how a client repository could call the shared workflow once it is published.
+
+For example:
+```YAML
+name: Engineering Quality Checks
+
+on:
+    pull_request:
+    push:
+        branches: [main]
+
+jobs:
+    quality:
+        uses: edward-sf/standards/.github/workflows/quality-checks.yml@v1
+```
+
+Your central workflow might enforce:
 - Required tests
 - Linting
 - Formatting
@@ -81,7 +191,7 @@ Standards should be automated wherever possible. Documentation tells developers 
 
 Standards should be treated as controlled engineering assets.
 
-Changes to the standards receive PR review before promotion to `main`. The roadmap places shared compliance checks in M3 and formal release, change management, and deprecation policies in M4. These mechanisms serve the following purposes.
+The following mechanisms help to maintain quality engineering standards, which have implications for all client repos. Changes to the standards should be intentional and heavily scrutinized before promotion to `main`.
 
 | Mechanism | Purpose |
 | --------- | ------- |
@@ -89,11 +199,25 @@ Changes to the standards receive PR review before promotion to `main`. The roadm
 | Pull request reviews | Prevent uncontrolled policy changes |
 | CODEOWNERS | Define who approves changes |
 | Changelog | Track changes and their impact |
-| RFC process | Discuss significant changes before adoption |
+| RFC process | Discuss signficiant changes before adoption |
 | Deprecation policy | Give projects time to migrate |
 | Compliance checks | Identify projects that aren't following standards |
 
-## Planned AI engineering standards
+We also distinguish between three tiers of standards:
+
+### Mandatory
+
+Non-negotiable requirements, such as protecting secrets, requiring code reviews, and preventing known critical vulnerabilities from reaching production.
+
+### Recommended
+
+Strong recommendations that projects should follow unless they have a documented reason not to.
+
+### Optional
+
+Suggestions and patterns that teams can adopt depending on their technology, architecture, and circumstances. Primarily used to avoid rework than enforce practices.
+
+## AI Engineering
 
 Given the enormous paradigm shift associated with agentic development workflows, standards around AI Engineering are quickly evolving. Powerful, high-velocity tools require well-defined standards if we want them to produce reliable, deterministic output.
 
