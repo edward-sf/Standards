@@ -22,6 +22,6 @@ A solo maintainer whose policy permits documentation self-review can record the 
 | Revision to the reviewed PR | What the authorized reviewer checks |
 | --- | --- |
 | Typo correction | Inspect the delta since the reviewed revision. If only spelling changed, confirm the rendered sentence and command still carry the same meaning and record that focused check. The earlier retry results still apply. |
-| Zero now means unlimited retries | Determine whether the project approved the expanded scope. Revisit the earlier zero-case finding, inspect the bounded scheduler test and positive-limit regression result, and compare the revised guide with the implementation. Confirm which reviewer the behavior-change policy requires and record that person's decision on the revision. |
+| Zero now means unlimited retries | Determine whether the project approved the expanded scope. The earlier zero-case verification is stale. Inspect the bounded scheduler test and compare the revised guide with the implementation. For the three-retry finding, confirm the corrected text still agrees with the positive-limit regression result before carrying its resolution forward. Confirm which reviewer the behavior-change policy requires and record that person's decision on the revision. |
 
 If a revision invalidates earlier evidence, keep the affected finding open until the new evidence supports the result. The author and reviewer can point to a commit, range, or updated diff and the checks they repeated. A new approval should cover what actually changed.
