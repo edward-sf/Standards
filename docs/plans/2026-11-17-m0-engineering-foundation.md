@@ -125,3 +125,16 @@ T2 through T6 can start after T1 lands. T7 integrates their published documents.
 - The README identifies the owner, audience, purpose, repository structure, and available standards. Its local links resolve, and a reader can tell which assets are planned.
 - The seven deliverables satisfy the milestone exit criteria. Every foundational standard states its purpose and scope, uses consistent normative language, and gives each MUST a responsible role and inspectable evidence.
 - A new client can establish its development workflow from the README. The recorded client and contributor walkthroughs cover branch targets, change purpose, review evidence, issue closure, and the owner's milestone merge.
+
+### M0.T8 Complete the review walkthrough
+
+[Issue #16](https://github.com/edward-sf/standards/issues/16) records the acceptance gaps found during integrated review. This follow-up uses the existing client-walkthrough and re-review criteria.
+
+- [ ] Extend `development/git-workflow.md` and the milestone PR evidence with one installation correction across both branch histories and review policies.
+- [ ] Correct the prior-feedback reference in `development/code-review.md`. Re-run the installation and parser examples, both Git histories, and fresh-checkout verification.
+- [ ] Commit as `docs(review): complete the client walkthrough`.
+
+**Acceptance criteria**
+
+- The installation example identifies the original failure, corrected command, observed result, PR record, authorized reviewer, merge authority, and issue closure under both histories.
+- The review example correctly identifies which zero-case evidence is stale and whether the earlier three-retry finding remains resolved.
