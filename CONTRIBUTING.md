@@ -14,6 +14,18 @@ Use one Markdown document per topic in the appropriate discipline directory. Sta
 
 “Changes must be traceable” leaves a reviewer guessing where to look. Write “The PR author MUST link the change request or describe the problem and intended outcome in the PR body.” A reviewer can now open the PR and determine whether the author supplied that evidence. Apply this test to every mandatory rule, including ones expressed without a keyword.
 
+## Enforce subscribed standards in the client
+
+When a client adopts a standard, it MUST enforce every deterministically checkable requirement at the point where a violation would take effect. The Standards repository supplies and maintains the enforcement scripts. The client runs the shared check against its own change and configuration and uses the result to gate the relevant operation. For a merge rule, for example, a failing check blocks the merge. Agent instructions and self-reported compliance do not satisfy this requirement. Preserve the meaning of SHOULD and MAY when defining a failure condition.
+
+For each new or amended standard, the contributor MUST document the enforcement decision alongside the rule and link the evidence from the proposal PR:
+
+- **What the client can enforce.** Identify the inputs, the condition that passes or fails, the Standards-owned script, and where the client runs it. Demonstrate the check with both a conforming and a violating case. The same inputs and configuration must produce the same decision. A script may use existing tools or platform controls.
+- **What still requires judgment.** Enforce the checkable portion. For the remainder, describe the approaches considered, what was tried or examined, and why each approach is non-viable for the actual requirement. Give a counterexample or concrete limitation and state what the reviewer must still decide. Pending implementation is an open enforcement gap.
+- **Who accepts the evidence.** Before a new or amended standard is accepted, a Standards maintainer MUST explicitly approve the documented enforcement effort, including the rationale for every uncovered requirement. Record the maintainer's decision and the revision it covers in the Standards PR. An agent's self-review or a client team's acceptance cannot grant this approval.
+
+For example, when a client requires independent PR review, a shared check can compare the author and reviewer identities and verify that approval covers the change being merged. A same-author approval fails that policy. A different reviewer's approval can establish independence. Counting comments, however, cannot establish that the reviewer understood the failure behavior: a single comment can identify a regression, and ten comments can miss it. A proposal relying on human judgment for review quality still needs evidence for its independence check and maintainer approval of the remaining limitation.
+
 ## Plan and claim work
 
 The [roadmap](docs/plans/2026-11-17-roadmap.md) links milestones and active plans. Specs own requirements. A milestone plan records task boundaries, files, and acceptance checks when work on that milestone starts. Each task has one GitHub issue with its plan ID in the title, a link to the plan section, and its acceptance criteria. The [project board](https://github.com/users/edward-sf/projects/11) records status.
