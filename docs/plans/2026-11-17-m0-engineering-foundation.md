@@ -66,6 +66,7 @@ T2 through T6 can start after T1 lands. T7 integrates their published documents.
 - A contributor can propose or update a standard, follow the branch and board transitions, and identify who may resolve checkpoints, merge issue PRs, and merge the milestone PR.
 - The guide covers hotfixes, synchronization, deviations, and newly discovered work. Starting at either agent file leads to the contributor guide.
 - For each MUST, contributors can identify the responsible role and the evidence a reviewer could inspect. A worked example demonstrates both. The guide defines MUST, SHOULD, and MAY and the purpose and scope of each standard.
+- The contributor guide requires deterministic client enforcement using Standards-maintained scripts, evidence of passing and violating cases, and a documented evaluation of alternatives for any uncovered requirement. A Standards maintainer explicitly approves the effort and any limitations before acceptance.
 
 ### M0.T3 Define engineering principles and trade-offs
 

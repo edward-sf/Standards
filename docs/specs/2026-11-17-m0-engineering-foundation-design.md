@@ -36,6 +36,8 @@ For example, a small client can route short-lived branches to its default branch
 
 Each foundational standard states its purpose and scope. For every `MUST`, the contributor identifies the responsible person or role and evidence a reviewer can inspect. For example, a client maintainer documents who can merge, and the reviewer can point to that policy in the client repository. The contribution guide owns this writing convention. Use relative links for repository documents.
 
+The contribution guide also defines how a standard qualifies for client adoption. The client enforces subscribed requirements wherever a deterministic decision is possible using scripts supplied and maintained by this repository. A proposal documents the enforcement effort, alternatives considered for uncovered requirements, why they are non-viable, and the Standards maintainer's approval. M0 establishes this contribution rule. M3 delivers reusable enforcement tooling.
+
 After a reviewed PR changes, the author identifies the affected feedback and verification, updates the evidence, and obtains review of the revision under the project's merge policy. The PR standard specifies what the author records. The code review standard specifies who reviews the change and how far that review extends. A spelling correction can receive a focused check of the corrected text. A change that alters behavior or the meaning of a requirement calls for re-review of the affected behavior and fresh verification. The project's existing rules for self-review and independent review apply to both.
 
 ## Operating this repository
