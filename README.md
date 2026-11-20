@@ -1,6 +1,32 @@
 # Standards
 A centralized source of truth for how software should be designed, built, tested, secured, documented, and maintained across client repositories.
 
+I use these standards across my own engineering projects. The catalog below links to the practices I use today. The [adoption levels](#how-client-repos-consume-the-standards) explain why I want to move from documentation to automated enforcement, and the [pitfalls](#pitfalls-to-avoid) describe where I think standardization can go too far.
+
+Maintained by Edward Simpson-Fitzgibbon (@edward-sf).
+
+## Available standards
+
+| Discipline | Use this document to… |
+| --- | --- |
+| Principles | [Weigh an engineering trade-off](principles/engineering-principles.md) and decide when to record it. |
+| Development | [Review code](development/coding-standards.md) for clarity, failure behavior, and language-appropriate checks. |
+| Development | [Choose a Git workflow](development/git-workflow.md) and identify branch, commit, merge, and tag conventions. |
+| Development | [Prepare a pull request](development/pull-request-standards.md) with purpose, scope, and verification evidence. |
+| Development | [Review a change or a revised PR](development/code-review.md) and resolve blocking feedback. |
+
+**MUST** marks a mandatory requirement, **SHOULD** a recommendation a project may depart from with a documented reason, and **MAY** an optional practice.
+
+To change a standard, start with the [contributor guide](CONTRIBUTING.md). Coding agents share the [agent instructions](AGENTS.md). The [roadmap](docs/plans/2026-11-17-roadmap.md) links the milestone plans and future work on quality, security, AI engineering, automation, and governance. The discipline documents above are available for adoption now.
+
+## Adopt the foundation in a new project
+
+Link the relevant standards from your contribution guide. Publish the merge policy and the commands your team uses for verification. For example, a small project's policy could read:
+
+> Branch from current main as `<issue-number>-<short-slug>` and open a PR back to main. Use a Conventional Commit title. Link the issue, describe the intended outcome, and record the checks and results. A maintainer may self-review a documentation-only change by recording the diff inspected and the evidence. Behavior changes require another maintainer's recorded approval. Refresh the affected checks and review after edits. The maintainer squash-merges and uses a closing reference in the PR to close the issue on main. Merge updated main into an active branch before integration when it has fallen behind. The release maintainer tags the reviewed main revision for release using `vMAJOR.MINOR.PATCH`.
+
+Try the policy on a correction to an installation command. Record the problem, run the corrected command in a clean checkout, review the diff under the policy, and merge. A team that wants its owner to review a whole milestone can use the [two worked Git histories](development/git-workflow.md#two-histories-for-one-change) to follow the same correction through an issue PR and a milestone PR.
+
 ## Repo structure
 
 Standards are organized around engineering disciplines, remaining language agnostic at the top level.
@@ -132,6 +158,8 @@ The standards repository defines the expectations; individual projects implement
 This is where the Standards become particularly meaningful.
 
 You can provide reusable GitHub Actions workflows that other repositories call, standardizing your core CI/CD actions across projects cheaply.
+
+**Planned for M3.** The YAML below illustrates how a client repository could call the shared workflow once it is published.
 
 For example:
 ```YAML
