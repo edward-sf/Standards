@@ -14,10 +14,19 @@ Maintained by Edward Simpson-Fitzgibbon (@edward-sf).
 | Development | [Choose a Git workflow](development/git-workflow.md) and identify branch, commit, merge, and tag conventions. |
 | Development | [Prepare a pull request](development/pull-request-standards.md) with purpose, scope, and verification evidence. |
 | Development | [Review a change or a revised PR](development/code-review.md) and resolve blocking feedback. |
+| Quality | [Choose the test level](quality/testing-strategy.md), dependencies and fixtures for changed behavior and regressions. |
+| Quality | [Interpret coverage](quality/test-coverage.md) with assertions and failure-path evidence. |
+| Quality | [Decide whether a task is done](quality/definition-of-done.md) and whether its revision may merge or ship. |
+| Operations | [Gate a revision through CI/CD](operations/ci-cd.md), promote its artifact and recover from a failed deployment. |
+| Security | [Assess access control and data handling](security/secure-development.md) and the need for security review. |
+| Security | [Provision, use, rotate and revoke a credential](security/secrets-management.md). |
+| Security | [Assess a dependency change or finding](security/dependency-management.md) and verify its disposition. |
+| Documentation | [Identify the project, API and release documentation](documentation/documentation-standards.md) a change affects. |
+| Documentation | [Record an architectural decision](documentation/adr-standards.md) and supersede it later. |
 
 **MUST** marks a mandatory requirement, **SHOULD** a recommendation a project may depart from with a documented reason, and **MAY** an optional practice.
 
-To change a standard, start with the [contributor guide](CONTRIBUTING.md). Coding agents share the [agent instructions](AGENTS.md). The [roadmap](docs/plans/2026-11-17-roadmap.md) links the milestone plans and future work on quality, security, AI engineering, automation, and governance. The discipline documents above are available for adoption now.
+To change a standard, start with the [contributor guide](CONTRIBUTING.md). Coding agents share the [agent instructions](AGENTS.md). The [roadmap](docs/plans/2026-11-17-roadmap.md) links the milestone plans and future work on quality, security, AI engineering, automation, and governance. The discipline documents above are available for adoption now. Standards with deterministic rules ship their client checks under [checks](checks/), and each document shows the command a client runs.
 
 ## Adopt the foundation in a new project
 
