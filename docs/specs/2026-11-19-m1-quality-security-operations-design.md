@@ -22,7 +22,7 @@ The [published milestone](https://github.com/edward-sf/standards/milestone/2) de
 
 Each discipline document owns its rules. The Definition of Done points to the evidence the other standards produce. A project should be able to apply the standards to its own stack and distinguish automated decisions from decisions requiring a reviewer.
 
-For each standard, follow the [client enforcement requirements](../../CONTRIBUTING.md#enforce-subscribed-standards-in-the-client). Ship the Standards-owned checks needed for its deterministic requirements with the standard. Record the operation each check gates, its inputs and configuration, a conforming and violating case, and what happens at the client when it fails. For an uncovered requirement, record the approaches examined, their limitations and the decision a reviewer still makes. A Standards maintainer explicitly approves that evidence for the reviewed revision before acceptance.
+For each standard, follow the [client enforcement requirements](../../CONTRIBUTING.md#enforce-subscribed-standards-in-the-client). Ship the Standards-owned checks needed for its deterministic requirements with the standard. Record the operation each check gates, its inputs and configuration, a conforming and violating case, and what happens at the client when it fails. For an uncovered requirement, record the approaches examined, their limitations and the decision a reviewer still makes. A Standards maintainer explicitly approves that evidence for the integrated revision on the milestone PR before acceptance.
 
 ## Exit criteria
 

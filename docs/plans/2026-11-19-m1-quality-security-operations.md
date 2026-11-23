@@ -6,7 +6,7 @@ The [milestone spec](../specs/2026-11-19-m1-quality-security-operations-design.m
 
 After T1 lands, testing (T2), secure development (T3), secrets and dependencies (T4), and documentation (T5) can proceed independently. CI/CD (T6) consumes the testing and security gates. The Definition of Done (T7) brings the evidence together. The final walkthrough (T8) exercises all nine documents against a single sample project.
 
-Each standards task owns the scripts and fixtures for its checkable rules alongside the named Markdown files. Its PR records how a subscribing client runs the check, shows pass and fail cases, explains limitations with concrete evidence, and obtains the maintainer decision on the reviewed revision as described in [Enforce subscribed standards in the client](../../CONTRIBUTING.md#enforce-subscribed-standards-in-the-client).
+Each standards task owns the scripts and fixtures for its checkable rules alongside the named Markdown files. Its PR records how a subscribing client runs the check, shows pass and fail cases, and explains limitations with concrete evidence. The contributor merges the verified task PR into `milestone/m1`. The maintainer records the enforcement decision for each task on the milestone PR, as described in [Enforce subscribed standards in the client](../../CONTRIBUTING.md#enforce-subscribed-standards-in-the-client).
 
 ### M1.T1 Publish the M1 spec and implementation plan
 
